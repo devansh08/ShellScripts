@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#if [[ -z $XDG_CURRENT_DESKTOP && -z $XDG_SESSION_DESKTOP ]]
+wmctrl -m > /dev/null 2>&1
+if [[ $? -eq 1 ]]; then
+	printf "\033c"
+
+	echo -e "Which DE do you want to run ?\n\n1. Cinnamon\n2. LXDE\n3. i3\n4. Command Line\n"
+	read -p "> " resp
+
+	while true; do
+		case $resp in
+			1 ) echo "exec cinnamon-session" > .xinitrc;
+				break;;
+			2 )	echo "exec startlxde" > .xinitrc;
+				break;;
+			3 ) echo "exec i3" > .xinitrc;
+				break;;
+			4 ) exit 1;;
+			* ) echo "Wrong choice. Try again.\n";
+			    read -p "> " resp;;
+		esac
+	done
+
+	echo "Starting in 3 seconds ..."
+	sleep 3
+
+	startx
+else
+	exit 2
+fi
+

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+url="www.bing.com"
+imgdir="$HOME/Pictures/Wallpaper/Bing/"
+conf="$HOME/.bing-wall"
+
+mkdir -p $imgdir
+
+if [[ -f $conf ]]; then
+	lastdt=$(cat $conf)
+	if [[ $lastdt == $(date +%d/%m) ]]; then
+		exit 1
+	else
+		echo $(date +%d/%m) > $conf
+	fi
+else
+	echo $(date +%d/%m) > $conf
+fi
+
+tmp=$(mktemp)
+
+wget -q -O $tmp $url
+sed -i -e "s/'/\"/g" -e "s/\"/\n/g" $tmp
+
+lno=$(($(grep "img src" $tmp -n | cut -d : -f 1) + 1))
+link=$url$(head -n $lno $tmp | tail -n 1)
+imgname=$(echo $link | cut -d / -f 5)
+
+wget -q -P $imgdir $link
+
+gsettings set org.cinnamon.desktop.background picture-uri "file:///$imgdir$imgname"
+gsettings set org.cinnamon.desktop.background picture-options "stretched"
+
+rm $tmp

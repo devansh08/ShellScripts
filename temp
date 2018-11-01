@@ -1,0 +1,1 @@
+val=`sensors | grep "Package id 0" | cut -d+ -f2 | cut -d. -f1` && echo $val

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+while true; do
+	bval=$(upower -i $(upower -e | grep BAT) | grep percentage | cut -d : -f 2 | tr -d [:space:] && echo)
+	val=$(echo $bval | head -c 3 | cut -d % -f 1)
+	
+	on_ac_power
+	if [ $? -eq 1 ]; then
+		if [ $val -le 12 ]; then
+			notify-send "Battery is low. Please put to charge."
+			espeak "Battery is low. Please put to charge."
+		fi
+	else
+		if [ $val -eq 100 ]; then
+			notify-send "Battery fully charged. Disconnect AC power."
+			espeak "Battery fully charged. Disconnect AC power."
+		fi
+	fi
+	sleep 60
+done
+

@@ -1,0 +1,87 @@
+#!/bin/bash
+
+file=~/.comic
+mlink="http://www.gocomics.com"
+fstr="<picture class=\"item-comic-image\">"
+tdate=$(date +%Y)/$(date +%m)/$(date +%d)
+time=$(date +%H)
+
+OVERRIDE=0
+DATE=0
+
+display_comics () {
+	date_check
+	if [ $DATE -eq 1 ] || [ $time -ge 12 ]; then
+		lnum=$(wget -q -O - "$mlink/calvinandhobbes/$date" | tee /tmp/source.html | grep -n "$fstr" | cut -d ':' -f 1)
+		lnum=$(($lnum+4))
+		link=$(head -n $lnum source.html | tail -n 1 | cut -d '"' -f 5)
+		wget -q -O /tmp/temp_cnh.jpg $link
+
+		lnum=$(wget -q -O - "$mlink/garfield/$date" | tee /tmp/source.html | grep -n "$fstr" | cut -d ':' -f 1)
+		lnum=$(($lnum+4))
+		link=$(head -n $lnum source.html | tail -n 1 | cut -d '"' -f 5)
+		wget -q -O /tmp/temp_garf.jpg $link
+
+		convert /tmp/temp_garf.jpg /tmp/temp_cnh.jpg -append /tmp/temp.jpg && shotwell --no-runtime-monitoring --no-startup-progress /tmp/temp.jpg 
+		rm /tmp/temp_garf.jpg /tmp/temp_cnh.jpg /tmp/temp.jpg /tmp/source.html
+
+		if [ $OVERRIDE -eq 0 ]; then
+			echo "$(date +%d)/$(date +%m)" > $file
+		fi
+	else
+		echo "New comic not available"
+	fi
+
+	exit 0
+}
+
+date_check() {
+	# Use 'if' and compare date and tdate using 'cut' to get fields.
+	if [ $date == $tdate ]; then
+		DATE=0
+	fi
+}
+
+net_check() {
+	while true; do
+		ping -q -c 3 google.com > /tmp/ping_test 2>&1
+		if [ $? -eq 0 ]; then
+			return 0;
+		fi
+		sleep 60
+	done
+}
+
+show_help () {
+	echo "Usage : comic [OPTION]"
+	echo ""
+	echo "-o, --override    		ignore daily constraint"
+	echo "-d, --date=YYYY/MM/DD		fetch comic for specific date"
+	echo "-h, --help	        	display this help and exit"
+
+	exit 0
+}
+
+net_check
+rm /tmp/ping_test
+
+date=$tdate
+
+while true; do
+	case "$1" in
+		-o | --override ) OVERRIDE=1; shift ;;
+		-d | --date=* ) if [ $# -eq 1 ]; then date=$(echo $1 | cut -d = -f 2); else date=$2; fi; OVERRIDE=1; DATE=1; shift;;
+		-h | --help ) show_help; shift ;;
+		* ) break ;;
+	esac
+done
+
+touch $file
+
+if [ $OVERRIDE -eq 0 ]; then
+	if [ ! "$(cat $file)" == "$(date +%d)/$(date +%m)" ]; then
+		display_comics
+	fi
+else
+	display_comics
+fi

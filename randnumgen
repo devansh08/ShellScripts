@@ -1,0 +1,27 @@
+#!/bin/bash
+
+case $# in
+	3* )
+		llimit=$1;
+		uplimit=$2;
+		freq=$3;;
+	2* )
+		llimit=$1;
+		uplimit=$2;
+		freq=1;;
+	* )
+		echo "ERROR: Too few arguments.\nSyntax: randnumgen <lowerlimit> <upperlimit> <frequency>";
+		exit 1;;
+esac
+
+count=1
+while [ $count -le $freq ]; do
+	num=-1
+	while [ $num -lt $llimit ]; do
+		num=$(($RANDOM % $uplimit))
+	done
+
+	echo $num
+	count=$(($count + 1))
+done
+
