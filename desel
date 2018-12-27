@@ -1,31 +1,40 @@
 #!/bin/bash
 
+if [[ $1 == "-n" ]]; then
+	STIME=0
+else
+	STIME=3
+fi
+
 #if [[ -z $XDG_CURRENT_DESKTOP && -z $XDG_SESSION_DESKTOP ]]
+alias echo='echo -e'
 wmctrl -m > /dev/null 2>&1
 if [[ $? -eq 1 ]]; then
 	printf "\033c"
 
-	echo -e "Which DE do you want to run ?\n\n1. Cinnamon\n2. LXDE\n3. i3\n4. Command Line\n"
+	echo -e "Which DE do you want to run ?\n\n1. Cinnamon\n2. bspwm\n3. i3\n4. LXDE\n5. XFCE\n6. Command Line\n"
 	read -p "> " resp
+
+	echo "Starting in 3 seconds ..."
+	sleep $STIME
 
 	while true; do
 		case $resp in
-			1 ) echo "exec cinnamon-session" > .xinitrc;
+			1 ) startx $HOME/.xinitrc.cinnamon;
 				break;;
-			2 )	echo "exec startlxde" > .xinitrc;
+			2 )	startx $HOME/.xinitrc.bspwm;
 				break;;
-			3 ) echo "exec i3" > .xinitrc;
+			3 ) startx $HOME/.xinitrc.i3;
 				break;;
-			4 ) exit 1;;
+			4 ) startx $HOME/.xinitrc.lxde;
+				break;;
+			5 ) startx $HOME/.xinitrc.xfce;
+				break;;
+			6 ) exit 1;;
 			* ) echo "Wrong choice. Try again.\n";
 			    read -p "> " resp;;
 		esac
 	done
-
-	echo "Starting in 3 seconds ..."
-	sleep 3
-
-	startx
 else
 	exit 2
 fi
