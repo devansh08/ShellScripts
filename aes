@@ -1,0 +1,70 @@
+#!/bin/bash
+
+DIR_PATH=$(cd $1 && pwd)
+CONF_FILE=$DIR_PATH/.aes.json
+
+if [[ -f $CONF_FILE ]]; then
+	comp_num=$(cat $CONF_FILE | jq ".components | length")
+
+	i=0
+	while [[ $i -lt $comp_num ]]; do
+		editor=$(cat $CONF_FILE | jq ".components[$i].editor" | tr -d '"')
+		if [[ $editor == "null" ]]; then
+			echo "No editor specified for component $i"
+			exit 2
+		fi
+		
+		path=$(cat $CONF_FILE | jq ".components[$i].path")
+		if [[ ! $path == "null" ]]; then
+			path=$(echo $path | tr -d '"')
+			cd $path
+		fi
+
+		files_num=$(cat $CONF_FILE | jq ".components[$i].files | length")
+		if [[ $files_num -eq 0 ]]; then
+			files="./"
+		else
+			j=0
+			files=""
+			while [[ $j -lt $files_num ]]; do
+				f=$(cat $CONF_FILE | jq ".components[$i].files[$j]" | tr -d '"')
+				files="$files $f"
+			
+				((j+=1))
+			done
+		fi
+
+		$editor $files
+		cd $DIR_PATH
+
+		((i+=1))
+	done
+
+	script_num=$(cat $CONF_FILE | jq ".scripts | length")
+
+	i=0
+	while [[ $i -lt $script_num ]]; do
+		path=$(cat $CONF_FILE | jq ".scripts[$i].path")
+		if [[ ! $path == "null" ]]; then
+			path=$(echo $path | tr -d '"')
+			cd $path
+		fi
+
+		cmd=$(cat $CONF_FILE | jq ".scripts[$i].command" | tr -d '"')
+		if [[ $cmd == "null" ]]; then
+			echo "No command specified for script $i"
+			exit 3
+		fi
+
+		$cmd &
+		cd $DIR_PATH
+
+		((i+=1))
+	done
+
+	sleep 1 && kill -9 $PPID
+else
+	echo "No config file found"
+	exit 1
+fi
+
